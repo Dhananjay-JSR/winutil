@@ -525,6 +525,29 @@ $sync["FontScalingSlider"].Add_ValueChanged({
     $sync.FontScalingValue.Text = "$percentage%"
 })
 
+# Enable touch dragging for the font scaling slider. WPF sliders ignore touch
+# drag on touchscreen-only devices, so the touch input is mapped onto the slider manually.
+$sync["FontScalingSlider"].Add_PreviewTouchDown({
+    param($slider, $e)
+    $slider.CaptureTouch($e.TouchDevice) | Out-Null
+    Set-WinUtilSliderFromTouch -Slider $slider -PositionX $e.GetTouchPoint($slider).Position.X
+    $e.Handled = $true
+})
+
+$sync["FontScalingSlider"].Add_PreviewTouchMove({
+    param($slider, $e)
+    if ($slider.AreAnyTouchesCaptured) {
+        Set-WinUtilSliderFromTouch -Slider $slider -PositionX $e.GetTouchPoint($slider).Position.X
+        $e.Handled = $true
+    }
+})
+
+$sync["FontScalingSlider"].Add_PreviewTouchUp({
+    param($slider, $e)
+    $slider.ReleaseTouchCapture($e.TouchDevice) | Out-Null
+    $e.Handled = $true
+})
+
 $sync["FontScalingResetButton"].Add_Click({
     $sync.FontScalingSlider.Value = 1.0
     $sync.FontScalingValue.Text = "100%"
